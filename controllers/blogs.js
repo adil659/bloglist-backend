@@ -11,7 +11,7 @@ app.get('/', async (request, response) => {
     return response.status(401).json({ error: 'token missing or invalid' })
   }
   const blogs = await Blog
-    .find({"user": decodedToken.id}).populate()
+    .find({"user": decodedToken.id}).populate('comments', {comment: 1})
   response.json(blogs)
 })
 
@@ -45,7 +45,7 @@ app.post('/', async (request, response, next) => {
 })
 
 app.get('/:id', async (request, response) => {
-  const blog = await Blog.findById(request.params.id)
+  const blog = await Blog.findById(request.params.id).populate('comments', { comment: 1})
   if (blog) {
     response.json(blog)
   } else {
@@ -73,15 +73,17 @@ app.delete('/:id', async (request, response, next) => {
 })
 
 app.put('/:id', async (request, response, next) => {
+  console.log("we in here")
   const body = request.body
   console.log('body', body)
   const blog = {
     title: body.title,
     author: body.author,
     url: body.url,
-    likes: body.likes || 0
+    likes: body.likes || 0,
+    user: body.user
   }
-  const result = await Blog.findByIdAndUpdate(request.params.id, blog)
+  const result = await Blog.findByIdAndUpdate(request.params.id, blog, {new: true} ).populate('comments', {comment: 1})
   if (result) {
     response.json(result)
   } else {
